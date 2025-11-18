@@ -1,3 +1,11 @@
 package com.mobcom.taskify.data.model
 
-data class User()
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import java.util.*
+
+data class User(
+    val uid: String = "",
+    val username: String = "",
+    val email: String = ""
+)
