@@ -26,4 +26,10 @@ interface NoteDao {
 
     @Query("DELETE FROM notes WHERE user_id = :userId")
     suspend fun deleteAllUserNotes(userId: Int)
+
+    @Query("SELECT * FROM notes WHERE firestore_id = :firestoreId LIMIT 1")
+    suspend fun getNoteByFirestoreId(firestoreId: String): Note?
+
+    @Query("SELECT * FROM notes WHERE user_id = :userId AND (firestore_id IS NULL OR firestore_id = '')")
+    suspend fun getUnsyncedNotes(userId: Int): List<Note>
 }

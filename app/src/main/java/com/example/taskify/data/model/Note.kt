@@ -12,6 +12,7 @@ data class Note(
     val note_id: Int = 0,
 
     val user_id: Int = 0,
+    val firestore_id: String = "",
     val title: String = "",
     val content: String = "",
     val color_tag: String = "#FFFFFF",
@@ -23,6 +24,7 @@ data class Note(
     constructor() : this(
         0,
         0,
+        "",
         "",
         "",
         "#FFFFFF",

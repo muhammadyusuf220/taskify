@@ -1,26 +1,65 @@
 {
   "project_info": {
-    "project_number": "328765572396",
-    "project_id": "taskify-1bcdc",
-    "storage_bucket": "taskify-1bcdc.firebasestorage.app"
+    "project_number": "181016369158",
+    "project_id": "taskify-6a509",
+    "storage_bucket": "taskify-6a509.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:328765572396:android:522a41d0783c672c9d1889",
+        "mobilesdk_app_id": "1:181016369158:android:b0e5202f44376024354b87",
         "android_client_info": {
-          "package_name": "com.mobcom.taskify"
+          "package_name": "com.example.taskify"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "181016369158-mnnvjft9in802l5nvgm1lkhevpt73oig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBxtVg9my802MoG67TkxjI6FwPdKyX7gTI"
+          "current_key": "AIzaSyAHnPICol10zltSgR0F5j9c6v_KCGWchJs"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "181016369158-mnnvjft9in802l5nvgm1lkhevpt73oig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:181016369158:android:08f6c240cbf7562e354b87",
+        "android_client_info": {
+          "package_name": "com.mobcom.taskify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "181016369158-mnnvjft9in802l5nvgm1lkhevpt73oig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHnPICol10zltSgR0F5j9c6v_KCGWchJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "181016369158-mnnvjft9in802l5nvgm1lkhevpt73oig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

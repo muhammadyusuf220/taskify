@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="calendar_background">#1E1E1E</color> <color name="calendar_header">#1E1E1E</color>
+    <color name="calendar_text">#FFFFFF</color> <color name="calendar_icons">#FFFFFF</color>
+</resources>

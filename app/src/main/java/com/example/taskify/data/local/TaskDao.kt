@@ -31,4 +31,10 @@ interface TaskDao {
 
     @Query("DELETE FROM tasks WHERE user_id = :userId")
     suspend fun deleteAllUserTasks(userId: String)
+
+    @Query("SELECT * FROM tasks WHERE firestore_id = :firestoreId LIMIT 1")
+    suspend fun getTaskByFirestoreId(firestoreId: String): Task?
+
+    @Query("SELECT * FROM tasks WHERE user_id = :userId AND (firestore_id IS NULL OR firestore_id = '')")
+    suspend fun getUnsyncedTasks(userId: Int): List<Task>
 }

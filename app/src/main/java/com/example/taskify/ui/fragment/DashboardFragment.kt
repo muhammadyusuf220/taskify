@@ -45,15 +45,12 @@ class DashboardFragment : Fragment() {
 
     private fun setupRecyclerView() {
         taskAdapter = TaskAdapter(
-            onTaskClick = { task ->
-                showEditTaskDialog(task)
-            },
+            onTaskClick = { task -> showEditTaskDialog(task) },
             onTaskCheckChanged = { task, isChecked ->
-                viewModel.toggleTaskCompletion(task.task_id, isChecked)
+                // UBAH KE INI (Kirim object 'task', bukan 'task.task_id')
+                viewModel.toggleTaskCompletion(task, isChecked)
             },
-            onDeleteClick = { task ->
-                showDeleteConfirmation(task)
-            }
+            onDeleteClick = { task -> showDeleteConfirmation(task) }
         )
 
         binding.rvTasks.apply {

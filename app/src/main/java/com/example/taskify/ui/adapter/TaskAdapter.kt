@@ -63,10 +63,13 @@ class TaskAdapter(
 
     class TaskDiffCallback : DiffUtil.ItemCallback<Task>() {
         override fun areItemsTheSame(oldItem: Task, newItem: Task): Boolean {
-            return oldItem.task_id == newItem.task_id
+            // Bandingkan ID Lokal ATAU ID Firestore (salah satu harus cocok)
+            return oldItem.task_id == newItem.task_id ||
+                    (oldItem.firestore_id.isNotEmpty() && oldItem.firestore_id == newItem.firestore_id)
         }
 
         override fun areContentsTheSame(oldItem: Task, newItem: Task): Boolean {
+            // Bandingkan seluruh isi (data class otomatis punya equals yang bagus)
             return oldItem == newItem
         }
     }

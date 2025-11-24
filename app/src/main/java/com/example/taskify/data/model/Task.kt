@@ -14,6 +14,8 @@ data class Task(
 
     val user_id: Int,
 
+    val firestore_id: String = "",
+
     val title: String,
 
     val description: String,
@@ -31,6 +33,7 @@ data class Task(
     constructor() : this(
         0,
         0,
+        "",
         "",
         "",
         "",
