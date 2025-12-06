@@ -82,6 +82,8 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
+    implementation("androidx.room:room-ktx:2.6.1")
 
     // Testing
     testImplementation(libs.junit)

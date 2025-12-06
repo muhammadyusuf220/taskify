@@ -11,6 +11,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.sync.Mutex // <--- Tambah Import
 import kotlinx.coroutines.sync.withLock // <--- Tambah Import
+import kotlinx.coroutines.flow.Flow
 
 class TaskifyRepository(private val database: AppDatabase, context: Context) {
 
@@ -113,88 +114,62 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     }
 
     // Task Methods
-    suspend fun getAllTasks(userId: Int): List<Task> {
-        return database.taskDao().getAllTasks(userId.toString())
+    fun getAllTasks(userId: Int): Flow<List<Task>> {
+        return database.taskDao().getAllTasks(userId)
     }
 
-    suspend fun getIncompleteTasks(userId: Int): List<Task> {
-        return database.taskDao().getIncompleteTasks(userId.toString())
+     fun getIncompleteTasks(userId: Int): Flow<List<Task>> {
+        return database.taskDao().getIncompleteTasks(userId)
     }
 
     suspend fun insertTask(task: Task): Long {
-        // Cukup simpan ke lokal.
-        // Nanti MainViewModel akan memanggil loadTasks() -> syncTasks() untuk proses upload.
         return database.taskDao().insertTask(task)
     }
 
     suspend fun updateTask(task: Task) {
-        val currentUser = firebaseAuth.currentUser
+        val taskToUpdate = task.copy(is_synced = false)
+        database.taskDao().updateTask(taskToUpdate) // Update Lokal Cepat
 
-        // Update Firestore
+        // Coba Upload Background
+        val currentUser = firebaseAuth.currentUser
         if (currentUser != null && task.firestore_id.isNotEmpty()) {
             try {
-                firestore.collection("users")
-                    .document(currentUser.uid)
-                    .collection("tasks")
-                    .document(task.firestore_id)
-                    .update(
-                        mapOf(
-                            "title" to task.title,
-                            "description" to task.description,
-                            "due_date" to task.due_date,
-                            "is_completed" to task.isCompleted
-                        )
-                    ).await()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                firestore.collection("users").document(currentUser.uid)
+                    .collection("tasks").document(task.firestore_id)
+                    .set(hashMapOf( // Gunakan SET (Upsert)
+                        "firestore_id" to task.firestore_id,
+                        "title" to task.title,
+                        "description" to task.description,
+                        "due_date" to task.due_date,
+                        "is_completed" to task.isCompleted,
+                        "created_at" to task.created_at
+                    )).await()
+                database.taskDao().markAsSynced(task.task_id)
+            } catch (e: Exception) { e.printStackTrace() }
         }
-
-        // Update Room
-        database.taskDao().updateTask(task)
     }
 
     suspend fun deleteTask(task: Task) {
-        val currentUser = firebaseAuth.currentUser
-
-        // Hapus dari Firestore
-        if (currentUser != null && task.firestore_id.isNotEmpty()) {
-            try {
-                firestore.collection("users")
-                    .document(currentUser.uid)
-                    .collection("tasks")
-                    .document(task.firestore_id)
-                    .delete()
-                    .await()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
-        // Hapus dari Room
-        database.taskDao().deleteTask(task)
+        val deletedTask = task.copy(is_deleted = true, is_synced = false)
+        database.taskDao().updateTask(deletedTask) // Hilang dari UI instan
     }
 
     // Update khusus Checklist
     // Kita ubah parameternya menerima object Task agar bisa ambil firestore_id
     suspend fun toggleTaskCompletion(task: Task, isCompleted: Boolean) {
-        val currentUser = firebaseAuth.currentUser
+        // Update lokal & tandai unsynced
+        database.taskDao().updateTaskCompletion(task.task_id, isCompleted)
 
+        // Coba Upload
+        val currentUser = firebaseAuth.currentUser
         if (currentUser != null && task.firestore_id.isNotEmpty()) {
             try {
-                firestore.collection("users")
-                    .document(currentUser.uid)
-                    .collection("tasks")
-                    .document(task.firestore_id)
-                    .update("is_completed", isCompleted)
-                    .await()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                firestore.collection("users").document(currentUser.uid)
+                    .collection("tasks").document(task.firestore_id)
+                    .update("is_completed", isCompleted).await()
+                database.taskDao().markAsSynced(task.task_id)
+            } catch (e: Exception) { e.printStackTrace() }
         }
-
-        // Update Room (tetap pakai ID lokal)
-        database.taskDao().updateTaskCompletion(task.task_id, isCompleted)
     }
 
     private suspend fun uploadUnsyncedTasks(userId: Int) {
@@ -238,56 +213,74 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
 
     suspend fun syncTasks(userId: Int) {
         syncMutex.withLock {
-            uploadUnsyncedTasks(userId) // Upload dulu
-
             val currentUser = firebaseAuth.currentUser ?: return@withLock
+
+            // A. UPLOAD NEW / EDITED
+            val unsyncedTasks = database.taskDao().getUnsyncedTasks(userId)
+            for (task in unsyncedTasks) {
+                try {
+                    firestore.collection("users").document(currentUser.uid)
+                        .collection("tasks").document(task.firestore_id)
+                        .set(hashMapOf(
+                            "firestore_id" to task.firestore_id,
+                            "title" to task.title,
+                            "description" to task.description,
+                            "due_date" to task.due_date,
+                            "is_completed" to task.isCompleted,
+                            "created_at" to task.created_at
+                        )).await()
+                    database.taskDao().markAsSynced(task.task_id)
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+
+            // B. UPLOAD DELETED
+            val deletedTasks = database.taskDao().getDeletedTasks(userId)
+            for (task in deletedTasks) {
+                try {
+                    if (task.firestore_id.isNotEmpty()) {
+                        firestore.collection("users").document(currentUser.uid)
+                            .collection("tasks").document(task.firestore_id)
+                            .delete().await()
+                    }
+                    database.taskDao().deleteTask(task) // Hapus permanen lokal
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+
+            // C. DOWNLOAD DARI SERVER
             try {
                 val snapshot = firestore.collection("users")
-                    .document(currentUser.uid)
-                    .collection("tasks")
-                    .get()
-                    .await()
+                    .document(currentUser.uid).collection("tasks").get().await()
 
-                for (document in snapshot.documents) {
-                    val firestoreId = document.id
-                    val data = document.data ?: continue
+                for (doc in snapshot.documents) {
+                    val fId = doc.id
+                    val data = doc.data ?: continue
+                    val localTask = database.taskDao().getTaskByFirestoreId(fId)
 
-                    // 1. Cek apakah data ini SUDAH ADA di lokal?
-                    val localTask = database.taskDao().getTaskByFirestoreId(firestoreId)
+                    // PENTING: Jangan timpa jika lokal sedang diedit user (belum sync)
+                    if (localTask != null && !localTask.is_synced) continue
 
                     val taskToSave = Task(
-                        // 2. KUNCI PENTING:
-                        // Jika sudah ada, PAKAI ID LOKAL LAMA agar Room tahu ini update.
-                        // Jika belum ada, PAKAI 0 agar Room buat ID baru.
                         task_id = localTask?.task_id ?: 0,
-
                         user_id = userId,
-                        firestore_id = firestoreId,
+                        firestore_id = fId,
                         title = data["title"] as? String ?: "",
                         description = data["description"] as? String ?: "",
                         due_date = data["due_date"] as? String ?: "",
                         isCompleted = data["is_completed"] as? Boolean ?: false,
-                        created_at = data["created_at"] as? String ?: ""
+                        created_at = data["created_at"] as? String ?: "",
+                        is_synced = true, // Karena dari server, pasti synced
+                        is_deleted = false
                     )
 
-                    if (localTask == null) {
-                        // Belum ada -> Insert
-                        database.taskDao().insertTask(taskToSave)
-                    } else {
-                        // Sudah ada -> Update
-                        database.taskDao().updateTask(taskToSave)
-                    }
+                    if (localTask == null) database.taskDao().insertTask(taskToSave)
+                    else database.taskDao().updateTask(taskToSave)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            } catch (e: Exception) { e.printStackTrace() }
         }
     }
 
     // Note Methods
-    suspend fun getAllNotes(userId: Int): List<Note> {
-        // Untuk performa, kita load dari Room (Offline First).
-        // Nanti bisa ditambahkan logika 'sync' terpisah jika perlu.
+    fun getAllNotes(userId: Int): Flow<List<Note>> {
         return database.noteDao().getAllNotes(userId)
     }
 
@@ -300,85 +293,89 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     private suspend fun uploadUnsyncedNotes(userId: Int) {
         val currentUser = firebaseAuth.currentUser ?: return
 
-        // Ambil catatan lokal yang firestore_id-nya masih kosong
+        // Query baru: Mengambil yang is_synced = false
         val unsyncedNotes = database.noteDao().getUnsyncedNotes(userId)
 
         for (note in unsyncedNotes) {
             try {
-                // Proses upload sama seperti insert
-                val docRef = firestore.collection("users")
+                // Upload ke Firestore pakai ID yang sudah ada (Upsert)
+                firestore.collection("users")
                     .document(currentUser.uid)
                     .collection("notes")
-                    .document()
+                    .document(note.firestore_id)
+                    .set(
+                        hashMapOf(
+                            "firestore_id" to note.firestore_id,
+                            "title" to note.title,
+                            "content" to note.content,
+                            "color_tag" to note.color_tag,
+                            "created_at" to note.created_at
+                            // Kita tidak perlu kirim 'is_synced' ke server, itu hanya untuk lokal
+                        )
+                    ).await()
 
-                val firestoreId = docRef.id
-
-                val noteMap = hashMapOf(
-                    "firestore_id" to firestoreId,
-                    "title" to note.title,
-                    "content" to note.content,
-                    "color_tag" to note.color_tag,
-                    "created_at" to note.created_at
-                )
-
-                docRef.set(noteMap).await()
-
-                // Update lokal setelah berhasil
-                val updatedNote = note.copy(firestore_id = firestoreId)
-                database.noteDao().updateNote(updatedNote)
+                // SUKSES? Update status lokal jadi Synced (True)
+                database.noteDao().markAsSynced(note.note_id)
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Skip jika masih gagal, coba lagi nanti
+                // Jika gagal (internet mati), is_synced tetap false.
+                // Nanti akan dicoba lagi saat sync berikutnya.
             }
         }
     }
 
     suspend fun updateNote(note: Note) {
-        val currentUser = firebaseAuth.currentUser
+        // 1. Siapkan data: Update isi note DAN set is_synced = false
+        // Ini menandakan data ini "kotor" (dirty) dan perlu diupload lagi nanti
+        val noteToUpdate = note.copy(is_synced = false)
 
-        // Update ke Firestore jika punya ID Firestore
+        // 2. Update ke Room DULUAN (INSTAN)
+        // UI akan langsung berubah karena LiveData mengamati Room
+        database.noteDao().updateNote(noteToUpdate)
+
+        // 3. Coba kirim ke Firestore (Background)
+        val currentUser = firebaseAuth.currentUser
         if (currentUser != null && note.firestore_id.isNotEmpty()) {
             try {
                 firestore.collection("users")
                     .document(currentUser.uid)
                     .collection("notes")
                     .document(note.firestore_id)
-                    .update(
-                        mapOf(
+                    .set( // Gunakan SET (Upsert), bukan UPDATE, agar konsisten
+                        hashMapOf(
+                            "firestore_id" to note.firestore_id,
                             "title" to note.title,
                             "content" to note.content,
-                            "color_tag" to note.color_tag
+                            "color_tag" to note.color_tag,
+                            "created_at" to note.created_at
                         )
                     ).await()
+
+                // 4. Jika internet lancar & sukses upload -> Set is_synced = true kembali
+                database.noteDao().markAsSynced(note.note_id)
+
             } catch (e: Exception) {
                 e.printStackTrace()
+                // Jika gagal (Offline), tidak apa-apa.
+                // Data di Room tetap 'is_synced = false',
+                // jadi akan terambil otomatis saat fungsi 'syncNotes()' berjalan nanti.
             }
         }
-
-        // Update ke Room
-        database.noteDao().updateNote(note)
     }
 
     suspend fun deleteNote(note: Note) {
-        val currentUser = firebaseAuth.currentUser
+        // 1. Update status jadi deleted & belum sync
+        val deletedNote = note.copy(
+            is_deleted = true,
+            is_synced = false
+        )
 
-        // Hapus dari Firestore jika punya ID Firestore
-        if (currentUser != null && note.firestore_id.isNotEmpty()) {
-            try {
-                firestore.collection("users")
-                    .document(currentUser.uid)
-                    .collection("notes")
-                    .document(note.firestore_id)
-                    .delete()
-                    .await()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        // 2. Simpan perubahan ke Room (INSTAN, UI langsung update karena terfilter di getAllNotes)
+        database.noteDao().updateNote(deletedNote)
 
-        // Hapus dari Room
-        database.noteDao().deleteNote(note)
+        // 3. Coba sync jika ada internet (Opsional di sini, bisa serahkan ke Worker)
+        // uploadDeletedNotes(note.user_id)
     }
 
     suspend fun syncNotes(userId: Int) {
@@ -386,6 +383,8 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
         syncMutex.withLock {
             // A. Upload data lokal (Sekarang ini satu-satunya cara upload)
             uploadUnsyncedNotes(userId)
+
+            uploadDeletedNotes(userId)
 
             // B. Download data cloud
             val currentUser = firebaseAuth.currentUser ?: return@withLock
@@ -419,6 +418,35 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    private suspend fun uploadDeletedNotes(userId: Int) {
+        val currentUser = firebaseAuth.currentUser ?: return
+
+        // 1. Ambil data yang statusnya "deleted" dari Room
+        val deletedNotes = database.noteDao().getDeletedNotes(userId)
+
+        for (note in deletedNotes) {
+            try {
+                // 2. Hapus dari Firestore
+                if (note.firestore_id.isNotEmpty()) {
+                    firestore.collection("users")
+                        .document(currentUser.uid)
+                        .collection("notes")
+                        .document(note.firestore_id)
+                        .delete()
+                        .await()
+                }
+
+                // 3. Hapus PERMANEN dari Room setelah sukses di cloud
+                database.noteDao().deleteNote(note)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Jika gagal, data tetap berstatus 'is_deleted = true' di Room.
+                // User tetap tidak melihatnya, dan akan dicoba hapus lagi nanti.
             }
         }
     }

@@ -11,6 +11,8 @@ import com.example.taskify.data.model.Task
 import com.example.taskify.data.model.User
 import com.example.taskify.data.repository.TaskifyRepository
 import kotlinx.coroutines.launch
+import androidx.lifecycle.*
+import java.util.UUID
 
 // Main ViewModel
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -20,65 +22,66 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     private val _tasks = MutableLiveData<List<Task>>()
-    val tasks: LiveData<List<Task>> = _tasks
+
 
     private val _notes = MutableLiveData<List<Note>>()
-    val notes: LiveData<List<Note>> = _notes
 
-    fun loadTasks() {
+    private val _currentUserId = MutableLiveData<Int>()
+    val notes: LiveData<List<Note>> = _currentUserId.switchMap { userId ->
+        repository.getAllNotes(userId).asLiveData()
+    }
+
+    val tasks: LiveData<List<Task>> = _currentUserId.switchMap { userId ->
+        repository.getAllTasks(userId).asLiveData()
+    }
+
+    fun loadTasks() { // Bisa diganti nama jadi refreshTasks
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
-                // 1. TAMPILKAN DATA LOKAL DULUAN (Instan, Offline jalan)
-                _tasks.value = repository.getAllTasks(userId)
-
-                // 2. Baru coba Sync ke Internet (Background)
-                try {
-                    repository.syncTasks(userId)
-
-                    // 3. Refresh lagi setelah sync (jika ada update dari cloud)
-                    _tasks.value = repository.getAllTasks(userId)
-                } catch (e: Exception) {
-                    // Jika internet mati, user tidak terganggu karena data lokal sudah tampil
-                    e.printStackTrace()
-                }
+                if (_currentUserId.value != userId) _currentUserId.value = userId
+                try { repository.syncTasks(userId) } catch (e: Exception) {}
             }
         }
     }
 
-    fun loadIncompleteTasks() {
-        viewModelScope.launch {
-            repository.getCurrentUserId()?.let { userId ->
-                // 1. TAMPILKAN DATA LOKAL DULUAN
-                _tasks.value = repository.getIncompleteTasks(userId)
-
-                // 2. Sync di Background
-                try {
-                    repository.syncTasks(userId)
-
-                    // 3. Refresh lagi
-                    _tasks.value = repository.getIncompleteTasks(userId)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
+//    fun loadIncompleteTasks() {
+//        viewModelScope.launch {
+//            repository.getCurrentUserId()?.let { userId ->
+//                // 1. TAMPILKAN DATA LOKAL DULUAN
+//                _tasks.value = repository.getIncompleteTasks(userId)
+//
+//                // 2. Sync di Background
+//                try {
+//                    repository.syncTasks(userId)
+//
+//                    // 3. Refresh lagi
+//                    _tasks.value = repository.getIncompleteTasks(userId)
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                }
+//            }
+//        }
+//    }
 
     fun addTask(title: String, description: String, dueDate: String) {
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
+                val uniqueId = UUID.randomUUID().toString() // Generate Client ID
+
                 val task = Task(
-                    task_id = 0,
                     user_id = userId,
-                    firestore_id = "", // Default kosong, Repository yang isi
+                    firestore_id = uniqueId, // Langsung isi!
                     title = title,
                     description = description,
                     due_date = dueDate,
                     isCompleted = false,
-                    created_at = System.currentTimeMillis().toString()
+                    created_at = System.currentTimeMillis().toString(),
+                    is_synced = false,
+                    is_deleted = false
                 )
                 repository.insertTask(task)
-                loadTasks() // atau loadIncompleteTasks() tergantung halaman
+
+                // TIDAK PERLU loadTasks(), Flow otomatis update UI
             }
         }
     }
@@ -87,40 +90,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateTask(task: Task) {
         viewModelScope.launch {
             repository.updateTask(task)
-            loadTasks()
+            // TIDAK PERLU loadTasks()
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repository.deleteTask(task)
-            loadTasks()
         }
     }
 
     fun toggleTaskCompletion(task: Task, isCompleted: Boolean) {
         viewModelScope.launch {
-            // Kirim object task ke repository agar bisa baca firestore_id
             repository.toggleTaskCompletion(task, isCompleted)
-            loadTasks()
         }
     }
 
     fun loadNotes() {
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
-                // PERUBAHAN 1: Load Lokal (Langsung Tampil)
-                _notes.value = repository.getAllNotes(userId)
-
-                // PERUBAHAN 2: Sync Cloud (Belakangan)
-                try {
-                    repository.syncNotes(userId)
-                    // Refresh lagi untuk memastikan data terbaru
-                    _notes.value = repository.getAllNotes(userId)
-                } catch (e: Exception) {
-                    // Internet mati? Tidak masalah.
-                    e.printStackTrace()
+                // Trigger Flow agar UI update
+                if (_currentUserId.value != userId) {
+                    _currentUserId.value = userId
                 }
+
+                // Jalanin sync diam-diam di background
+                try { repository.syncNotes(userId) } catch (e: Exception) {}
             }
         }
     }
@@ -128,15 +123,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addNote(title: String, content: String, colorTag: String = "#FFFFFF") {
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
+                val uniqueId = UUID.randomUUID().toString() // UUID aman sekarang
                 val note = Note(
                     user_id = userId,
-                    firestore_id = "", // Kosongkan saat inisialisasi, Repository yang akan isi
+                    firestore_id = uniqueId,
                     title = title,
                     content = content,
-                    color_tag = colorTag
+                    color_tag = colorTag,
+                    is_synced = false
                 )
                 repository.insertNote(note)
-                loadNotes()
+
+                // HAPUS: loadNotes() <-- TIDAK PERLU LAGI
+                // Room otomatis tahu ada data baru dan update 'val notes' di atas
             }
         }
     }
@@ -144,14 +143,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateNote(note: Note) {
         viewModelScope.launch {
             repository.updateNote(note)
-            loadNotes()
+
+            // HAPUS: loadNotes() <-- TIDAK PERLU LAGI
+            // UI akan update sendiri sepersekian detik setelah baris di atas selesai
         }
     }
 
     fun deleteNote(note: Note) {
         viewModelScope.launch {
             repository.deleteNote(note)
-            loadNotes()
+            // HAPUS: loadNotes() <-- TIDAK PERLU LAGI
         }
     }
 

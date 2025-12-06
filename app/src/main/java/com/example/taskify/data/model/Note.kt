@@ -16,7 +16,10 @@ data class Note(
     val title: String = "",
     val content: String = "",
     val color_tag: String = "#FFFFFF",
-    val created_at: String = Date().time.toString()
+
+    val created_at: String = Date().time.toString(),
+    val is_synced: Boolean = false,
+    val is_deleted: Boolean = false
 
 ) {
     // Constructor kosong untuk Room
@@ -28,6 +31,8 @@ data class Note(
         "",
         "",
         "#FFFFFF",
-        Date().time.toString()
+        Date().time.toString(),
+        false,
+        false
     )
 }
