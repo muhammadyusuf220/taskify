@@ -5,13 +5,16 @@ import androidx.room.*
 import com.example.taskify.data.model.Note
 import com.example.taskify.data.model.Task
 import com.example.taskify.data.model.User
+import com.example.taskify.data.model.Holiday
 
 // App Database
-@Database(entities = [User::class, Task::class, Note::class], version = 1, exportSchema = false)
+@Database(entities = [User::class, Task::class, Note::class, Holiday::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun taskDao(): TaskDao
     abstract fun noteDao(): NoteDao
+
+    abstract fun holidayDao(): HolidayDao
 
     companion object {
         @Volatile

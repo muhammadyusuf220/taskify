@@ -9,6 +9,7 @@ import com.example.taskify.data.local.AppDatabase
 import com.example.taskify.data.model.Note
 import com.example.taskify.data.model.Task
 import com.example.taskify.data.model.User
+import com.example.taskify.data.model.Holiday
 import com.example.taskify.data.repository.TaskifyRepository
 import kotlinx.coroutines.launch
 import androidx.lifecycle.*
@@ -26,7 +27,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _notes = MutableLiveData<List<Note>>()
 
+    val holidays: LiveData<List<Holiday>> = repository.getHolidays().asLiveData()
+
     private val _currentUserId = MutableLiveData<Int>()
+
+    init {
+        // Panggil fungsi sync saat ViewModel dibuat
+        refreshHolidays()
+    }
+
+    fun refreshHolidays() {
+        viewModelScope.launch {
+            repository.syncHolidays()
+        }
+    }
+
     val notes: LiveData<List<Note>> = _currentUserId.switchMap { userId ->
         repository.getAllNotes(userId).asLiveData()
     }

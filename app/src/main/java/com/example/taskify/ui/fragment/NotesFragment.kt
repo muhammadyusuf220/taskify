@@ -19,6 +19,8 @@ class NotesFragment : Fragment() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var noteAdapter: NoteAdapter
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -67,22 +69,39 @@ class NotesFragment : Fragment() {
         }
     }
 
+    // Di file NotesFragment.kt
+
     private fun showAddNoteDialog() {
         val dialogBinding = DialogAddNoteBinding.inflate(layoutInflater)
 
-        MaterialAlertDialogBuilder(requireContext())
+        // 1. Buat Dialog
+        val alertDialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Tambah Catatan Baru")
             .setView(dialogBinding.root)
-            .setPositiveButton("Simpan") { _, _ ->
-                val title = dialogBinding.etTitle.text.toString()
-                val content = dialogBinding.etContent.text.toString()
-
-                if (title.isNotEmpty()) {
-                    viewModel.addNote(title, content)
-                }
-            }
+            .setPositiveButton("Simpan", null) // Set null dulu
             .setNegativeButton("Batal", null)
-            .show()
+            .create()
+
+        // 2. Tampilkan Dialog
+        alertDialog.show()
+
+        // 3. Override perilaku tombol Simpan
+        alertDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val title = dialogBinding.etTitle.text.toString().trim()
+            val content = dialogBinding.etContent.text.toString().trim()
+
+            // VALIDASI: Judul wajib diisi
+            if (title.isEmpty()) {
+                android.widget.Toast.makeText(requireContext(), "Judul catatan tidak boleh kosong!", android.widget.Toast.LENGTH_SHORT).show()
+                // Dialog TIDAK akan tertutup di sini (karena kita tidak panggil dismiss)
+            } else {
+                // Jika valid, simpan
+                viewModel.addNote(title, content)
+
+                // Tutup dialog manual
+                alertDialog.dismiss()
+            }
+        }
     }
 
     private fun showEditNoteDialog(note: com.example.taskify.data.model.Note) {

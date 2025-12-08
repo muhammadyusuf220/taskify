@@ -12,6 +12,10 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.sync.Mutex // <--- Tambah Import
 import kotlinx.coroutines.sync.withLock // <--- Tambah Import
 import kotlinx.coroutines.flow.Flow
+import com.example.taskify.data.api.RetrofitClient // Import RetrofitClient
+import com.example.taskify.data.model.Holiday // Import Model Holiday
+import java.text.SimpleDateFormat // <--- Pastikan import ini ada
+import java.util.Locale           // <--- Pastikan import ini ada
 
 class TaskifyRepository(private val database: AppDatabase, context: Context) {
 
@@ -123,7 +127,41 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     }
 
     suspend fun insertTask(task: Task): Long {
-        return database.taskDao().insertTask(task)
+        // 1. Simpan ke Room (Lokal) DULUAN agar ID terbentuk dan UI update
+        val newId = database.taskDao().insertTask(task)
+
+        // 2. Coba kirim ke Firestore (Background) - LANGSUNG DI SINI
+        val currentUser = firebaseAuth.currentUser
+        if (currentUser != null && task.firestore_id.isNotEmpty()) {
+            try {
+                firestore.collection("users")
+                    .document(currentUser.uid)
+                    .collection("tasks") // Perhatikan collectionnya "tasks"
+                    .document(task.firestore_id)
+                    .set(
+                        hashMapOf(
+                            "firestore_id" to task.firestore_id,
+                            "title" to task.title,
+                            "description" to task.description, // String kosong ("") akan aman terkirim
+                            "due_date" to task.due_date,
+                            "is_completed" to task.isCompleted,
+                            "created_at" to task.created_at
+                        )
+                    ).await()
+
+                // 3. Jika sukses upload, tandai 'is_synced = true' di lokal
+                // Pastikan konversi ke Int karena insertTask mengembalikan Long
+                database.taskDao().markAsSynced(newId.toInt())
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Jika gagal (Offline/Error), biarkan saja.
+                // Status lokal tetap 'unsynced' (is_synced = 0)
+                // Nanti akan terupload otomatis saat syncTasks() berjalan.
+            }
+        }
+
+        return newId
     }
 
     suspend fun updateTask(task: Task) {
@@ -285,9 +323,39 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     }
 
     suspend fun insertNote(note: Note): Long {
-        // Cukup simpan ke lokal.
-        // MainViewModel akan memanggil loadNotes() -> syncNotes() setelah ini untuk upload.
-        return database.noteDao().insertNote(note)
+        // 1. Simpan ke Room (Lokal) DULUAN agar UI langsung muncul
+        val newId = database.noteDao().insertNote(note)
+
+        // 2. Coba kirim ke Firestore (Background) - LOGIKA INI YANG HILANG SEBELUMNYA
+        val currentUser = firebaseAuth.currentUser
+        if (currentUser != null && note.firestore_id.isNotEmpty()) {
+            try {
+                firestore.collection("users")
+                    .document(currentUser.uid)
+                    .collection("notes")
+                    .document(note.firestore_id)
+                    .set(
+                        hashMapOf(
+                            "firestore_id" to note.firestore_id,
+                            "title" to note.title,
+                            "content" to note.content, // Content kosong ("") aman dikirim
+                            "color_tag" to note.color_tag,
+                            "created_at" to note.created_at
+                        )
+                    ).await()
+
+                // 3. Jika sukses upload, tandai 'is_synced = true' di lokal
+                // Kita gunakan newId.toInt() karena insertNote mengembalikan Long
+                database.noteDao().markAsSynced(newId.toInt())
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Jika gagal (misal offline), biarkan saja.
+                // Status lokal tetap 'unsynced' dan akan terkirim saat syncNotes() jalan nanti.
+            }
+        }
+
+        return newId
     }
 
     private suspend fun uploadUnsyncedNotes(userId: Int) {
@@ -503,6 +571,67 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
                 INSTANCE = instance
                 instance
             }
+        }
+    }
+    // Di TaskifyRepository.kt
+
+    fun getHolidays(): Flow<List<Holiday>> {
+        // Pastikan pakai getAllHolidays()
+        return database.holidayDao().getAllHolidays()
+    }
+
+    suspend fun syncHolidays() {
+        val calendar = java.util.Calendar.getInstance()
+        val currentYear = calendar.get(java.util.Calendar.YEAR)
+
+        // Ambil Tahun Lalu, Tahun Ini, dan Tahun Depan
+        val yearsToFetch = listOf(currentYear - 1, currentYear, currentYear + 1)
+
+        for (year in yearsToFetch) {
+            try {
+                // Cek lokal dulu
+                val count = database.holidayDao().getCountByYear(year.toString())
+
+                // Jika data kurang dari 1 (belum ada), ambil dari API
+                if (count < 1) {
+                    try {
+                        val response = RetrofitClient.instance.getHolidays(year)
+
+                        // --- LOGIKA PERBAIKAN FORMAT TANGGAL ---
+                        // Kita map data response untuk memperbaiki string tanggalnya
+                        val fixedList = response.map { holiday ->
+                            holiday.copy(
+                                date = normalizeDate(holiday.date)
+                            )
+                        }
+
+                        // Simpan list yang SUDAH DIPERBAIKI ke database
+                        database.holidayDao().insertHolidays(fixedList)
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // --- TAMBAHKAN FUNGSI INI DI DALAM CLASS REPOSITORY ---
+    private fun normalizeDate(rawDate: String): String {
+        return try {
+            // Format input API: "2026-01-1" (M-d bisa menangkap 1 digit)
+            val inputFormat = SimpleDateFormat("yyyy-M-d", Locale.getDefault())
+
+            // Format output DB: "2026-01-01" (MM-dd memaksa 2 digit)
+            val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+            val date = inputFormat.parse(rawDate)
+            outputFormat.format(date!!)
+        } catch (e: Exception) {
+            // Jika error parsing, kembalikan data asli agar tidak crash
+            rawDate
         }
     }
 }

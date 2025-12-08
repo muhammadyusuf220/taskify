@@ -24,6 +24,8 @@ class DashboardFragment : Fragment() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var taskAdapter: TaskAdapter
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -72,6 +74,8 @@ class DashboardFragment : Fragment() {
         }
     }
 
+    // Di file DashboardFragment.kt
+
     private fun showAddTaskDialog() {
         val dialogBinding = DialogAddTaskBinding.inflate(layoutInflater)
         var selectedDate = ""
@@ -92,19 +96,35 @@ class DashboardFragment : Fragment() {
             ).show()
         }
 
-        MaterialAlertDialogBuilder(requireContext())
+        // 1. Buat Dialog tapi JANGAN langsung pasang aksi di setPositiveButton
+        val alertDialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Tambah Tugas Baru")
             .setView(dialogBinding.root)
-            .setPositiveButton("Simpan") { _, _ ->
-                val title = dialogBinding.etTitle.text.toString()
-                val description = dialogBinding.etDescription.text.toString()
-
-                if (title.isNotEmpty() && selectedDate.isNotEmpty()) {
-                    viewModel.addTask(title, description, selectedDate)
-                }
-            }
+            .setPositiveButton("Simpan", null) // Set null dulu agar tidak auto-close
             .setNegativeButton("Batal", null)
-            .show()
+            .create()
+
+        // 2. Tampilkan Dialog
+        alertDialog.show()
+
+        // 3. Ambil Tombol "Simpan" dan pasang Listener Manual
+        alertDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val title = dialogBinding.etTitle.text.toString().trim()
+            val description = dialogBinding.etDescription.text.toString().trim()
+
+            // VALIDASI: Judul DAN Tanggal wajib diisi
+            if (title.isEmpty()) {
+                android.widget.Toast.makeText(requireContext(), "Judul tugas tidak boleh kosong!", android.widget.Toast.LENGTH_SHORT).show()
+            } else if (selectedDate.isEmpty()) {
+                android.widget.Toast.makeText(requireContext(), "Tanggal tugas harus dipilih!", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                // Jika valid, simpan ke ViewModel
+                viewModel.addTask(title, description, selectedDate)
+
+                // Tutup dialog secara manual
+                alertDialog.dismiss()
+            }
+        }
     }
 
     private fun showEditTaskDialog(task: com.example.taskify.data.model.Task) {
