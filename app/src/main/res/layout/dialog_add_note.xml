@@ -1,36 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_margin="24dp"
+    app:cardCornerRadius="26dp"
+    app:cardElevation="10dp"
+    android:backgroundTint="@android:color/white">
 
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Judul Catatan">
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+        <!-- Header Title + Icon -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_note"
+                android:layout_marginEnd="8dp"
+                app:tint="@color/secondary_900" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Isi Catatan">
+            <TextView
+                android:id="@+id/dialog_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tambah Catatan"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/secondary_900" />
+        </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_content"
+        <!-- Judul Catatan -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minLines="5"
-            android:gravity="top" />
+            android:hint="Judul Catatan"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxStrokeColor="@color/secondary_700"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusBottomEnd="16dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp"
+                android:textColor="@color/secondary_900"
+                android:textSize="15sp" />
 
-</LinearLayout>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Isi Catatan -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Isi Catatan"
+            android:layout_marginTop="14dp"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxStrokeColor="@color/secondary_700"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusBottomEnd="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minLines="5"
+                android:gravity="top"
+                android:padding="14dp"
+                android:textColor="@color/secondary_900"
+                android:textSize="15sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_note"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Simpan"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="22dp"
+            android:backgroundTint="@color/primary_600"
+            android:textColor="@color/black"
+            app:cornerRadius="18dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

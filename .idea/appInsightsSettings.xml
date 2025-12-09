@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.mobcom.taskify" />
+                  <option name="mobileSdkAppId" value="1:328765572396:android:522a41d0783c672c9d1889" />
+                  <option name="projectId" value="taskify-1bcdc" />
+                  <option name="projectNumber" value="328765572396" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

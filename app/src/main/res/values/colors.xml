@@ -2,4 +2,40 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary Brand Color -->
+    <color name="md_theme_light_primary">#6750A4</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+
+    <!-- Secondary -->
+    <color name="md_theme_light_secondary">#625B71</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+
+    <!-- Background & Surface -->
+    <color name="md_theme_light_background">#FFFFFF</color>
+    <color name="md_theme_light_onBackground">#1C1B1F</color>
+
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#1C1B1F</color>
+
+    <!-- Outline & Borders -->
+    <color name="md_theme_light_outline">#79747E</color>
+
+    <!-- PRIMARY (Kuning) -->
+    <color name="primary_500">#FFD54F</color>
+    <color name="primary_600">#FFCA28</color>
+    <color name="primary_700">#FFC107</color>
+
+    <!-- SECONDARY (Hitam / Abu) -->
+    <color name="secondary_900">#212121</color>
+    <color name="secondary_700">#424242</color>
+
+    <!-- TEXT -->
+    <color name="text_primary">#000000</color>
+    <color name="text_on_primary">#000000</color>
+
+    <color name="light_gray_background">#F5F5F5</color>
+    <color name="colorPrimary">#FFD54F</color> <!-- warna kuning utama -->
+
+
 </resources>
