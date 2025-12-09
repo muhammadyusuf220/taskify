@@ -31,58 +31,44 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     private val syncMutex = Mutex()
     suspend fun registerUser(email: String, password: String, username: String): Result<User> {
         return try {
-            // 1. Buat user di Firebase
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("Gagal membuat user Firebase")
 
-            // 2. Simpan data user ke Database Lokal (Room)
-            // Kita tetap butuh user di Room karena Task & Note terhubung ke user_id (Int)
-            // Password tidak perlu disimpan di lokal lagi, atau isi dummy saja.
             val newUser = User(
                 username = username,
                 email = email,
-                password = "firebase_managed" // Password dihandle Firebase
+                password = "firebase_managed"
             )
 
-            // Cek dulu apakah email sudah ada di lokal (mencegah crash)
             val existingLocalUser = database.userDao().getUserByEmail(email)
 
             val userId: Int
             if (existingLocalUser == null) {
                 userId = database.userDao().insertUser(newUser).toInt()
             } else {
-                // Jika entah kenapa di lokal sudah ada tapi di firebase belum
                 userId = existingLocalUser.user_id
             }
 
-            // 3. Update objek user dengan ID dari Room
             val finalUser = newUser.copy(user_id = userId)
 
-            // 4. Simpan Session Lokal
             saveUserSession(userId)
 
             Result.success(finalUser)
         } catch (e: Exception) {
-            // Menangkap error Firebase (misal: email format salah, password terlalu pendek, sinyal mati)
             Result.failure(e)
         }
     }
 
     suspend fun loginUser(email: String, password: String): Result<User> {
         return try {
-            // 1. Login ke Firebase
             val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("Gagal login Firebase")
 
-            // 2. Sinkronisasi dengan Database Lokal
-            // Cari user di database lokal berdasarkan email
             var localUser = database.userDao().getUserByEmail(email)
 
-            // Jika user sukses login di Firebase tapi data tidak ada di HP ini (misal ganti HP/instal ulang)
-            // Kita harus buat data user lokal baru agar Task/Note bisa disimpan.
             if (localUser == null) {
                 val newUser = User(
-                    username = firebaseUser.displayName ?: "User", // Atau ambil dari input jika perlu
+                    username = firebaseUser.displayName ?: "User",
                     email = email,
                     password = "firebase_managed"
                 )
@@ -90,7 +76,6 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
                 localUser = newUser.copy(user_id = newId)
             }
 
-            // 3. Simpan Session
             saveUserSession(localUser.user_id)
 
             Result.success(localUser)
@@ -127,37 +112,30 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     }
 
     suspend fun insertTask(task: Task): Long {
-        // 1. Simpan ke Room (Lokal) DULUAN agar ID terbentuk dan UI update
         val newId = database.taskDao().insertTask(task)
 
-        // 2. Coba kirim ke Firestore (Background) - LANGSUNG DI SINI
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null && task.firestore_id.isNotEmpty()) {
             try {
                 firestore.collection("users")
                     .document(currentUser.uid)
-                    .collection("tasks") // Perhatikan collectionnya "tasks"
+                    .collection("tasks")
                     .document(task.firestore_id)
                     .set(
                         hashMapOf(
                             "firestore_id" to task.firestore_id,
                             "title" to task.title,
-                            "description" to task.description, // String kosong ("") akan aman terkirim
+                            "description" to task.description,
                             "due_date" to task.due_date,
                             "is_completed" to task.isCompleted,
                             "created_at" to task.created_at
                         )
                     ).await()
-
-                // 3. Jika sukses upload, tandai 'is_synced = true' di lokal
-                // Pastikan konversi ke Int karena insertTask mengembalikan Long
                 database.taskDao().markAsSynced(newId.toInt())
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Jika gagal (Offline/Error), biarkan saja.
-                // Status lokal tetap 'unsynced' (is_synced = 0)
-                // Nanti akan terupload otomatis saat syncTasks() berjalan.
+
             }
         }
 
@@ -323,10 +301,8 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     }
 
     suspend fun insertNote(note: Note): Long {
-        // 1. Simpan ke Room (Lokal) DULUAN agar UI langsung muncul
         val newId = database.noteDao().insertNote(note)
 
-        // 2. Coba kirim ke Firestore (Background) - LOGIKA INI YANG HILANG SEBELUMNYA
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null && note.firestore_id.isNotEmpty()) {
             try {
@@ -338,20 +314,16 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
                         hashMapOf(
                             "firestore_id" to note.firestore_id,
                             "title" to note.title,
-                            "content" to note.content, // Content kosong ("") aman dikirim
+                            "content" to note.content,
                             "color_tag" to note.color_tag,
                             "created_at" to note.created_at
                         )
                     ).await()
 
-                // 3. Jika sukses upload, tandai 'is_synced = true' di lokal
-                // Kita gunakan newId.toInt() karena insertNote mengembalikan Long
                 database.noteDao().markAsSynced(newId.toInt())
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Jika gagal (misal offline), biarkan saja.
-                // Status lokal tetap 'unsynced' dan akan terkirim saat syncNotes() jalan nanti.
             }
         }
 
@@ -433,17 +405,12 @@ class TaskifyRepository(private val database: AppDatabase, context: Context) {
     }
 
     suspend fun deleteNote(note: Note) {
-        // 1. Update status jadi deleted & belum sync
         val deletedNote = note.copy(
             is_deleted = true,
             is_synced = false
         )
 
-        // 2. Simpan perubahan ke Room (INSTAN, UI langsung update karena terfilter di getAllNotes)
         database.noteDao().updateNote(deletedNote)
-
-        // 3. Coba sync jika ada internet (Opsional di sini, bisa serahkan ke Worker)
-        // uploadDeletedNotes(note.user_id)
     }
 
     suspend fun syncNotes(userId: Int) {
