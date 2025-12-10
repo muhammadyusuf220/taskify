@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.*
 import java.util.UUID
 
-// Main ViewModel
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = TaskifyRepository.getInstance(
         AppDatabase.getDatabase(application),
@@ -32,7 +31,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentUserId = MutableLiveData<Int>()
 
     init {
-        // Panggil fungsi sync saat ViewModel dibuat
         refreshHolidays()
     }
 
@@ -50,7 +48,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         repository.getAllTasks(userId).asLiveData()
     }
 
-    fun loadTasks() { // Bisa diganti nama jadi refreshTasks
+    fun loadTasks() { 
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
                 if (_currentUserId.value != userId) _currentUserId.value = userId
@@ -62,14 +60,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 //    fun loadIncompleteTasks() {
 //        viewModelScope.launch {
 //            repository.getCurrentUserId()?.let { userId ->
-//                // 1. TAMPILKAN DATA LOKAL DULUAN
 //                _tasks.value = repository.getIncompleteTasks(userId)
 //
-//                // 2. Sync di Background
 //                try {
 //                    repository.syncTasks(userId)
 //
-//                    // 3. Refresh lagi
 //                    _tasks.value = repository.getIncompleteTasks(userId)
 //                } catch (e: Exception) {
 //                    e.printStackTrace()
@@ -81,11 +76,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addTask(title: String, description: String, dueDate: String) {
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
-                val uniqueId = UUID.randomUUID().toString() // Generate Client ID
+                val uniqueId = UUID.randomUUID().toString() 
 
                 val task = Task(
                     user_id = userId,
-                    firestore_id = uniqueId, // Langsung isi!
+                    firestore_id = uniqueId, 
                     title = title,
                     description = description,
                     due_date = dueDate,
@@ -95,8 +90,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     is_deleted = false
                 )
                 repository.insertTask(task)
-
-                // TIDAK PERLU loadTasks(), Flow otomatis update UI
             }
         }
     }
@@ -105,7 +98,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateTask(task: Task) {
         viewModelScope.launch {
             repository.updateTask(task)
-            // TIDAK PERLU loadTasks()
         }
     }
 
@@ -124,12 +116,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun loadNotes() {
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
-                // Trigger Flow agar UI update
                 if (_currentUserId.value != userId) {
                     _currentUserId.value = userId
                 }
 
-                // Jalanin sync diam-diam di background
                 try { repository.syncNotes(userId) } catch (e: Exception) {}
             }
         }
@@ -138,7 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addNote(title: String, content: String, colorTag: String = "#FFFFFF") {
         viewModelScope.launch {
             repository.getCurrentUserId()?.let { userId ->
-                val uniqueId = UUID.randomUUID().toString() // UUID aman sekarang
+                val uniqueId = UUID.randomUUID().toString() 
                 val note = Note(
                     user_id = userId,
                     firestore_id = uniqueId,
@@ -149,8 +139,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 repository.insertNote(note)
 
-                // HAPUS: loadNotes() <-- TIDAK PERLU LAGI
-                // Room otomatis tahu ada data baru dan update 'val notes' di atas
             }
         }
     }
@@ -159,15 +147,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.updateNote(note)
 
-            // HAPUS: loadNotes() <-- TIDAK PERLU LAGI
-            // UI akan update sendiri sepersekian detik setelah baris di atas selesai
         }
     }
 
     fun deleteNote(note: Note) {
         viewModelScope.launch {
             repository.deleteNote(note)
-            // HAPUS: loadNotes() <-- TIDAK PERLU LAGI
         }
     }
 

@@ -69,35 +69,25 @@ class NotesFragment : Fragment() {
         }
     }
 
-    // Di file NotesFragment.kt
 
     private fun showAddNoteDialog() {
         val dialogBinding = DialogAddNoteBinding.inflate(layoutInflater)
 
-        // 1. Buat Dialog TANPA tombol Bawaan MaterialAlertDialogBuilder
-        // Hapus .setPositiveButton() dan .setNegativeButton()
         val alertDialog = MaterialAlertDialogBuilder(requireContext())
             .setView(dialogBinding.root)
-            // .setPositiveButton("Simpan", null) // <-- Hapus ini
-            // .setNegativeButton("Batal", null)  // <-- Hapus ini
             .create()
 
-        // 2. Tampilkan Dialog
         alertDialog.show()
 
-        // 3. Atur aksi untuk tombol Simpan (btn_save_note) yang ada di layout kustom
         dialogBinding.btnSaveNote.setOnClickListener {
             val title = dialogBinding.etTitle.text.toString().trim()
             val content = dialogBinding.etContent.text.toString().trim()
 
-            // VALIDASI: Judul wajib diisi
             if (title.isEmpty()) {
                 android.widget.Toast.makeText(requireContext(), "Judul catatan tidak boleh kosong!", android.widget.Toast.LENGTH_SHORT).show()
             } else {
-                // Jika valid, simpan
                 viewModel.addNote(title, content)
 
-                // Tutup dialog manual
                 alertDialog.dismiss()
             }
         }
@@ -107,14 +97,12 @@ class NotesFragment : Fragment() {
         val dialogBinding = DialogAddNoteBinding.inflate(layoutInflater)
         dialogBinding.etTitle.setText(note.title)
         dialogBinding.etContent.setText(note.content)
-        dialogBinding.dialogTitle.text = "Edit Catatan" // Perbarui judul
+        dialogBinding.dialogTitle.text = "Edit Catatan" 
 
         val alertDialog = MaterialAlertDialogBuilder(requireContext())
             .setView(dialogBinding.root)
-            // Hapus .setPositiveButton() dan .setNegativeButton()
             .create()
 
-        // Atur aksi untuk tombol Simpan (btn_save_note)
         dialogBinding.btnSaveNote.setOnClickListener {
             val title = dialogBinding.etTitle.text.toString()
             val content = dialogBinding.etContent.text.toString()
@@ -129,11 +117,6 @@ class NotesFragment : Fragment() {
             }
             alertDialog.dismiss()
         }
-
-        // Jika Anda ingin menambahkan tombol "Batal" di layout kustom,
-        // Anda harus menambahkannya di dialog_add_note.xml terlebih dahulu,
-        // lalu atur aksi di sini:
-        // dialogBinding.btnCancel.setOnClickListener { alertDialog.dismiss() }
 
         alertDialog.show()
     }

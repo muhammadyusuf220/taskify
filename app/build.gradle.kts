@@ -67,27 +67,20 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-
-    // ViewModel + LiveData
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
-
-    // Activity & Fragment KTX
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.fragment.ktx)
 
-//    // Room Database
 //    implementation(libs.androidx.room.runtime)
 //    implementation(libs.androidx.room.ktx)
 //    implementation(libs.androidx.room.common.jvm)
 //    kapt(libs.androidx.room.compiler)
 
-    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
     implementation("androidx.room:room-ktx:2.6.1")
 
-    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -6,7 +6,6 @@ import com.example.taskify.data.model.Note
 import com.example.taskify.data.model.Task
 import com.example.taskify.data.model.User
 
-// User DAO
 @Dao
 interface UserDao {
     @Query("SELECT * FROM users WHERE email = :email LIMIT 1")

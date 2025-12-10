@@ -14,7 +14,6 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Header Title + Icon -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,7 +38,6 @@
                 android:textColor="@color/secondary_900" />
         </LinearLayout>
 
-        <!-- Judul -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_title"
             android:layout_width="match_parent"
@@ -62,7 +60,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Deskripsi -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_description"
             android:layout_width="match_parent"
@@ -87,7 +84,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Select date -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_select_date"
             android:layout_width="match_parent"
@@ -103,7 +99,6 @@
             android:textColor="@color/black"
             app:cornerRadius="18dp" />
 
-        <!-- Save -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save_task"
             android:layout_width="match_parent"

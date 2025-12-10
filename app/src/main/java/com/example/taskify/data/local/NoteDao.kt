@@ -7,7 +7,6 @@ import com.example.taskify.data.model.Task
 import com.example.taskify.data.model.User
 import kotlinx.coroutines.flow.Flow
 
-// Note DAO
 @Dao
 interface NoteDao {
     @Query("SELECT * FROM notes WHERE user_id = :userId AND is_deleted = 0 ORDER BY created_at DESC")
@@ -34,7 +33,6 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE user_id = :userId AND is_synced = 0")
     suspend fun getUnsyncedNotes(userId: Int): List<Note>
 
-    // TAMBAHKAN method untuk update status saja
     @Query("UPDATE notes SET is_synced = 1 WHERE note_id = :noteId")
     suspend fun markAsSynced(noteId: Int)
 

@@ -7,10 +7,10 @@ import com.google.gson.annotations.SerializedName
 @Entity(tableName = "holidays")
 data class Holiday(
     @PrimaryKey
-    @SerializedName("holiday_date") // <--- PENTING: API baru pakai key ini
+    @SerializedName("holiday_date") 
     val date: String,
 
-    @SerializedName("holiday_name") // <--- PENTING: API baru pakai key ini
+    @SerializedName("holiday_name") 
     val localName: String,
 
     @SerializedName("is_national_holiday")

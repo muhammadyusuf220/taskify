@@ -14,7 +14,6 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Header Title + Icon -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,7 +38,6 @@
                 android:textColor="@color/secondary_900" />
         </LinearLayout>
 
-        <!-- Judul Catatan -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_title"
             android:layout_width="match_parent"
@@ -62,7 +60,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Isi Catatan -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_content"
             android:layout_width="match_parent"
@@ -88,7 +85,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Save Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save_note"
             android:layout_width="match_parent"

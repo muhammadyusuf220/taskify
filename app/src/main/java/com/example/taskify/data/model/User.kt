@@ -17,7 +17,6 @@ data class User(
     val created_at: String = Date().time.toString()
 
 ) {
-    // Constructor kosong untuk Room (WAJIB)
     @Ignore
     constructor() : this(
         0,

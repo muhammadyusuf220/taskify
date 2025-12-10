@@ -22,7 +22,6 @@ data class Note(
     val is_deleted: Boolean = false
 
 ) {
-    // Constructor kosong untuk Room
     @Ignore
     constructor() : this(
         0,

@@ -12,7 +12,6 @@ import com.example.taskify.data.model.User
 import com.example.taskify.data.repository.TaskifyRepository
 import kotlinx.coroutines.launch
 
-// Auth ViewModel
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = TaskifyRepository.getInstance(
         AppDatabase.getDatabase(application),

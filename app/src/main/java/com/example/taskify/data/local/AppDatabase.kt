@@ -7,7 +7,6 @@ import com.example.taskify.data.model.Task
 import com.example.taskify.data.model.User
 import com.example.taskify.data.model.Holiday
 
-// App Database
 @Database(entities = [User::class, Task::class, Note::class, Holiday::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao

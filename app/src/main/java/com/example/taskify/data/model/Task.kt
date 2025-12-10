@@ -1,4 +1,3 @@
-// File: com/example/taskify/data/model/Task.kt
 package com.example.taskify.data.model
 
 import androidx.room.ColumnInfo
@@ -22,14 +21,12 @@ data class Task(
 
     val created_at: String,
 
-    // TAMBAHAN BARU:
     @ColumnInfo(name = "is_synced")
     val is_synced: Boolean = false,
 
     @ColumnInfo(name = "is_deleted")
     val is_deleted: Boolean = false
 ) {
-    // Update constructor kosong
     @Ignore
     constructor() : this(0, 0, "", "", "", "", false, "", false, false)
 }
