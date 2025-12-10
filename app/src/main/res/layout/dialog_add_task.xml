@@ -1,43 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_margin="24dp"
+    app:cardCornerRadius="26dp"
+    app:cardElevation="10dp"
+    android:backgroundTint="@android:color/white">
 
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Judul Tugas">
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+        <!-- Header Title + Icon -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="18dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_note"
+                android:layout_marginEnd="8dp"
+                app:tint="@color/secondary_900" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Deskripsi">
+            <TextView
+                android:id="@+id/dialog_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tambah Tugas"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/secondary_900" />
+        </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_description"
+        <!-- Judul -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minLines="3" />
+            android:hint="Judul Tugas"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxStrokeColor="@color/secondary_700"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusBottomEnd="16dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:padding="14dp"
+                android:textColor="@color/secondary_900" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_select_date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Pilih Tanggal"
-        android:layout_marginTop="8dp"
-        style="@style/Widget.Material3.Button.OutlinedButton" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-</LinearLayout>
+        <!-- Deskripsi -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Deskripsi"
+            android:layout_marginTop="14dp"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxStrokeColor="@color/secondary_700"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusBottomEnd="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minLines="3"
+                android:textSize="15sp"
+                android:padding="14dp"
+                android:textColor="@color/secondary_900" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Select date -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_select_date"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Pilih Tanggal"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            app:icon="@drawable/ic_calendar_purple"
+            app:iconTint="@color/black"
+            app:iconPadding="12dp"
+            android:backgroundTint="@color/primary_600"
+            android:textColor="@color/black"
+            app:cornerRadius="18dp" />
+
+        <!-- Save -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_task"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Simpan"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/primary_700"
+            android:textColor="@color/black"
+            app:cornerRadius="18dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

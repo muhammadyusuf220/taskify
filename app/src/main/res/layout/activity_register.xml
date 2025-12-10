@@ -1,46 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/md_theme_light_background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp">
 
-        <TextView
-            android:id="@+id/tv_title"
+        <!-- HEADER -->
+        <LinearLayout
+            android:id="@+id/header_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Taskify"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="@color/primary_600"
+            android:layout_marginTop="32dp"
+            android:clipToOutline="true"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:elevation="4dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/primary_600"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="48dp" />
+            app:layout_constraintEnd_toEndOf="parent">
 
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_note"
+                app:tint="@color/black" />
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Taskify"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
+        </LinearLayout>
+
+        <!-- SUBTITLE -->
         <TextView
             android:id="@+id/tv_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Buat akun baru"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/tv_title"
+            android:text="Buat akun baru untuk mulai mengatur tugasmu"
+            android:textSize="15sp"
+            android:textColor="@color/secondary_700"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            app:layout_constraintTop_toBottomOf="@id/header_container"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- INPUT USERNAME -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_username"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="28dp"
             android:hint="Username"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxStrokeColor="@color/secondary_700"
+            app:boxStrokeWidth="1dp"
+            app:hintTextColor="@color/secondary_700"
             app:layout_constraintTop_toBottomOf="@id/tv_subtitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -53,12 +86,14 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- INPUT EMAIL -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_email"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="Email"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             app:layout_constraintTop_toBottomOf="@id/til_username"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -71,12 +106,14 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- INPUT PASSWORD -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_password"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="Password"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             app:passwordToggleEnabled="true"
             app:layout_constraintTop_toBottomOf="@id/til_email"
             app:layout_constraintStart_toStartOf="parent"
@@ -90,12 +127,14 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- INPUT CONFIRM PASSWORD -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_confirm_password"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="Konfirmasi Password"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             app:passwordToggleEnabled="true"
             app:layout_constraintTop_toBottomOf="@id/til_password"
             app:layout_constraintStart_toStartOf="parent"
@@ -109,34 +148,41 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- BUTTON DAFTAR -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_register"
             android:layout_width="0dp"
-            android:layout_height="56dp"
+            android:layout_height="50dp"
             android:text="Daftar"
             android:textSize="16sp"
+            android:textColor="@color/black"
+            android:backgroundTint="@color/primary_600"
             android:layout_marginTop="24dp"
+
             app:layout_constraintTop_toBottomOf="@id/til_confirm_password"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
-
+<!--        android:cornerRadius="12dp"-->
+        <!-- PROGRESS BAR -->
         <ProgressBar
             android:id="@+id/progress_bar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
+            android:layout_marginTop="12dp"
             app:layout_constraintTop_toBottomOf="@id/btn_register"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- LOGIN TEXT -->
         <TextView
             android:id="@+id/tv_login"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sudah punya akun? Masuk"
-            android:textColor="@color/black"
+            android:textColor="@color/secondary_900"
             android:layout_marginTop="16dp"
+            android:textStyle="bold"
             app:layout_constraintTop_toBottomOf="@id/progress_bar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />

@@ -78,8 +78,9 @@ class DashboardFragment : Fragment() {
 
     private fun showAddTaskDialog() {
         val dialogBinding = DialogAddTaskBinding.inflate(layoutInflater)
-        var selectedDate = ""
+        var selectedDate = "" // Variabel untuk menyimpan tanggal yang dipilih
 
+        // --- 1. Date Picker Logic ---
         dialogBinding.btnSelectDate.setOnClickListener {
             val calendar = Calendar.getInstance()
             DatePickerDialog(
@@ -96,19 +97,17 @@ class DashboardFragment : Fragment() {
             ).show()
         }
 
-        // 1. Buat Dialog tapi JANGAN langsung pasang aksi di setPositiveButton
+        // --- 2. Buat Dialog (Tanpa Judul & Tanpa Tombol Bawaan) ---
+        // HAPUS .setTitle() dan HAPUS setPositive/NegativeButton()
         val alertDialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Tambah Tugas Baru")
             .setView(dialogBinding.root)
-            .setPositiveButton("Simpan", null) // Set null dulu agar tidak auto-close
-            .setNegativeButton("Batal", null)
             .create()
 
-        // 2. Tampilkan Dialog
+        // 3. Tampilkan Dialog
         alertDialog.show()
 
-        // 3. Ambil Tombol "Simpan" dan pasang Listener Manual
-        alertDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+        // --- 4. Pasang Listener pada Tombol Simpan Kustom (btn_save_task) ---
+        dialogBinding.btnSaveTask.setOnClickListener {
             val title = dialogBinding.etTitle.text.toString().trim()
             val description = dialogBinding.etDescription.text.toString().trim()
 
@@ -132,9 +131,11 @@ class DashboardFragment : Fragment() {
         dialogBinding.etTitle.setText(task.title)
         dialogBinding.etDescription.setText(task.description)
         dialogBinding.btnSelectDate.text = task.due_date
+        dialogBinding.dialogTitle.text = "Edit Tugas" // Ganti judul
 
         var selectedDate = task.due_date
 
+        // ... (Logika DatePickerDialog tetap sama) ...
         dialogBinding.btnSelectDate.setOnClickListener {
             val calendar = Calendar.getInstance()
             DatePickerDialog(
@@ -151,25 +152,29 @@ class DashboardFragment : Fragment() {
             ).show()
         }
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Edit Tugas")
+        // 1. Buat Dialog TANPA tombol Bawaan
+        val alertDialog = MaterialAlertDialogBuilder(requireContext())
             .setView(dialogBinding.root)
-            .setPositiveButton("Simpan") { _, _ ->
-                val title = dialogBinding.etTitle.text.toString()
-                val description = dialogBinding.etDescription.text.toString()
+            // HAPUS setPositiveButton dan setNegativeButton
+            .create()
 
-                if (title.isNotEmpty()) {
-                    viewModel.updateTask(
-                        task.copy(
-                            title = title,
-                            description = description,
-                            due_date = selectedDate
-                        )
+        // 2. Pasang Listener pada Tombol Simpan Kustom (btn_save_task)
+        dialogBinding.btnSaveTask.setOnClickListener {
+            val title = dialogBinding.etTitle.text.toString()
+            val description = dialogBinding.etDescription.text.toString()
+
+            if (title.isNotEmpty()) {
+                viewModel.updateTask(
+                    task.copy(
+                        title = title,
+                        description = description,
+                        due_date = selectedDate
                     )
-                }
+                )
             }
-            .setNegativeButton("Batal", null)
-            .show()
+            alertDialog.dismiss() // Tutup dialog setelah aksi selesai
+        }
+        alertDialog.show()
     }
 
     private fun showDeleteConfirmation(task: com.example.taskify.data.model.Task) {
